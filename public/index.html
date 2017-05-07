@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+	<meta charset="UTF-8"/>
+	<title>idea-firebase-ad-jwt</title>
+	<style>
+		body:not(.loading) .loading,
+		body:not(.anonymous) .anonymous,
+		body:not(.authenticated) .authenticated {
+			display: none
+		}
+	</style>
+</head>
+
+<body class="loading">
+<div class="loading">Loading&hellip;</div>
+<div class="anonymous">
+	<form id="loginForm" autocomplete="off">
+		<fieldset>
+			<legend><strong>Sign in</strong></legend>
+			<table cellpadding="5" cellspacing="0" border="0">
+				<tr>
+					<td>
+						<label for="usernameInput">username</label>
+					</td>
+					<td>
+						<input type="email" id="usernameInput" name="username" pattern="[a-z]+@rabota.ua" required="required"/>
+					</td>
+				</tr>
+				<tr>
+					<td>
+						<label for="passwordInput">password</label>
+					</td>
+					<td>
+						<input type="password" id="passwordInput" name="password" required="required"/>
+					</td>
+				</tr>
+				<tr>
+					<td></td>
+					<td>
+						<input type="submit" value="Submit">
+					</td>
+				</tr>
+			</table>
+			<output id="loginError" style="display: none">
+				<span id="loginErrorReason"></span>
+			</output>
+		</fieldset>
+	</form>
+</div>
+<div class="authenticated">
+	<fieldset>
+		<legend>Signed in</legend>
+		<table cellpadding="5" cellspacing="0" border="0">
+			<tr>
+				<th>name</th>
+				<td id="uname"></td>
+			</tr>
+			<tr>
+				<th>email</th>
+				<td id="email"></td>
+			</tr>
+			<tr>
+				<th>groups</th>
+				<td id="groups"></td>
+			</tr>
+			<tr>
+				<th>issued</th>
+				<td id="iat"></td>
+			</tr>
+			<tr>
+				<th>expire</th>
+				<td id="exp"></td>
+			</tr>
+			<tr>
+				<th></th>
+				<td>
+					<button id="signout">Signout</button>
+				</td>
+			</tr>
+		</table>
+	</fieldset>
+</div>
+<script src="https://www.gstatic.com/firebasejs/3.9.0/firebase.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/axios/0.16.1/axios.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/moment.js/2.18.1/moment.js"></script>
+<script>
+	const parseJwt = token => JSON.parse(window.atob(token.split('.').splice(1, 1).shift().replace('-', '+').replace('_', '/')))
+
+	firebase.initializeApp({
+		apiKey: 'AIzaSyAUfmmyuJzFERWF7DZVNovWffaHJHxmJOw',
+		authDomain: 'idea-a3372.firebaseapp.com',
+		databaseURL: 'https://idea-a3372.firebaseio.com',
+		projectId: 'idea-a3372',
+		storageBucket: 'idea-a3372.appspot.com',
+		messagingSenderId: '60042808300'
+	})
+
+	firebase.auth().onAuthStateChanged(user => {
+		if (user) {
+			user.getToken().then(parseJwt).then(data => {
+				uname.innerHTML = data.name
+				email.innerHTML = data.email
+				groups.innerHTML = data.groups.join(', ')
+				iat.innerHTML = moment(data.iat * 1000).fromNow()
+				exp.innerHTML = moment(data.exp * 1000).fromNow()
+				document.body.className = 'authenticated'
+			})
+		} else {
+			document.body.className = 'anonymous'
+		}
+	})
+
+	const handleLoginError = error => {
+		document.body.className = 'anonymous'
+		loginErrorReason.innerHTML = error.message
+		loginError.removeAttribute('style')
+		console.error(error)
+	}
+
+	loginForm.addEventListener('submit', event => {
+		event.preventDefault()
+
+		const data = {
+			username: usernameInput.value,
+			password: passwordInput.value
+		}
+
+		axios.post('/token', data)
+			.then(response => firebase.auth().signInWithCustomToken(response.data))
+			.catch(handleLoginError)
+	})
+
+	signout.addEventListener('click', event => {
+		event.preventDefault()
+		firebase.auth().signOut().then(() => handleLoginError({message: 'You have been successfully logged out'}))
+	})
+</script>
+</body>
+
+</html>
