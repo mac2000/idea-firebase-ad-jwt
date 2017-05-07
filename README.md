@@ -2,6 +2,7 @@ For this to work, you will need your service account credentials:
 
 https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
 
+App expects it to leave here `secret/config.json`
 
 Build & publish:
 
