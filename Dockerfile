@@ -13,6 +13,9 @@ COPY package.json package.json
 RUN npm install
 COPY . .
 
+# https://github.com/nodejs/node/issues/8897
+VOLUME ["C:/app/secret"]
+RUN powershell -Command "Set-ItemProperty -Path 'HKLM:\SYSTEM\CurrentControlSet\Control\Session Manager\DOS Devices' -Name 'S:' -Value '\??\C:\app\secret' -Type String"
 EXPOSE 3000
 
 CMD ["/node/npm.cmd", "start"]

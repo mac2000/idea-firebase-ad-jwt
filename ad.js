@@ -70,7 +70,10 @@ const authenticate = (req, res, next) => {
 			req.user = user
 			next()
 		})
-		.catch(err => res.status(401).json(err))
+		.catch(err => {
+			console.log('getActiveDirectoryUser', err)
+			res.status(401).json(err)
+		})
 }
 
 module.exports = {

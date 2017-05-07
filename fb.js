@@ -1,6 +1,9 @@
 const admin = require('firebase-admin')
-const serviceAccount = require('./config.json')
+const fs = require('fs')
 
+const config = fs.existsSync('S:/config.json') ? 'S:/config.json' : './secret/config.json'
+
+const serviceAccount = require(config)
 admin.initializeApp({
 	credential: admin.credential.cert(serviceAccount),
 	databaseURL: `https://${serviceAccount.project_id}.firebaseio.com`
