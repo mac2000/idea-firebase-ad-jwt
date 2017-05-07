@@ -40,3 +40,15 @@ Exec:
 ```
 docker exec -it fb cmd
 ```
+
+Run on server:
+
+```
+docker run -d --name fb -p 58083:3000 -v %cd%\secret:C:\app\secret mac2000/idea-firebase-ad-jwt
+```
+
+On Beta:
+
+```
+docker run -d --name fb -p 58083:3000 -v  D:\mac\idea-firebase-ad-jwt\secret:C:\app\secret mac2000/idea-firebase-ad-jwt
+```
