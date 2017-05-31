@@ -55,4 +55,4 @@ docker run -d --name fb -p 58083:3000 -v  D:\mac\idea-firebase-ad-jwt\secret:C:\
 
 On Azure:
 
-Pass project_id, private_key_id, private_key, client_email, client_id, client_x509_cert_url environment variables from config.json
+Put config.json here D:/home/site/config.json
