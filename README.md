@@ -1,3 +1,5 @@
+http://fbjwt.azurewebsites.net/
+
 For this to work, you will need your service account credentials:
 
 https://console.firebase.google.com/project/_/settings/serviceaccounts/adminsdk
