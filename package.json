@@ -1,6 +1,6 @@
 {
   "name": "idea-firebase-ad-jwt",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "private": true,
   "main": "main.js",
   "scripts": {
@@ -12,7 +12,6 @@
     "cors": "^2.8.3",
     "express": "^4.15.2",
     "firebase-admin": "^4.2.1",
-    "ldapjs": "^1.0.1",
     "morgan": "^1.8.1"
   },
   "devDependencies": {

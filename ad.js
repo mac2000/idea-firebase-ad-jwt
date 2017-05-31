@@ -1,55 +1,53 @@
-const ldap = require('ldapjs')
-const {InvalidCredentialsError} = require('ldapjs')
+const http = require('http')
+const url = require('url')
 
-const url = process.env.LDAP_URL || 'ldap://192.168.5.2'
-const domain = process.env.LDAP_DOMAIN || 'rabota'
-const base = process.env.LDAP_BASE || 'dc=rabota,dc=local'
+const {hostname, port, path} = url.parse(process.env.AD || 'http://adjwt.rabota.ua:58083/token')
 
-const getActiveDirectoryUser = (email, password) => new Promise((resolve, reject) => {
+const decodeToken = token => {
+	const data = token.split('.').splice(1, 1).shift().replace('-', '+').replace('_', '/')
+	const json = new Buffer(data, 'base64').toString()
+	return JSON.parse(json)
+}
+
+const getActiveDirectoryUser = (username, password) => new Promise((resolve, reject) => {
 	try {
-		email = (email || '').toLowerCase().trim()
+		username = (username || '').toLowerCase().trim()
 
-		const username = email.split('@').shift().toLowerCase()
-		const client = ldap.createClient({url})
+		const body = JSON.stringify({username, password})
 
-		client.on('error', error => reject(error))
-
-		client.bind(`${domain}\\${username}`, password, err => {
-			if (err) {
-				client.unbind()
-				return reject(err instanceof InvalidCredentialsError ? {message: 'invalid credentials'} : err)
+		const req = http.request({
+			hostname,
+			port,
+			path,
+			method: 'POST',
+			headers: {
+				'Content-Type': 'application/json',
+				'Content-Length': Buffer.byteLength(body)
 			}
-
-			client.search(base, {filter: `(mail=${email})`, scope: 'sub'}, (err, res) => {
-				if (err) {
-					client.unbind()
-					return reject(err)
-				}
-
-				let found = false
-
-				res.on('searchEntry', ({object: {name, memberOf}}) => {
-					const groups = memberOf.map(dn => dn.split(',').shift().split('=').pop())
-					found = true
-					return resolve({
-						email,
-						groups,
-						displayName: name,
-						uid: username
-					})
-				})
-				res.on('error', err => {
-					client.unbind()
-					return reject(err)
-				})
-				res.on('end', () => {
-					client.unbind()
-					if (!found) {
-						reject({message: 'not found'})
+		}, res => {
+			let token = ''
+			res.on('data', chunk => token += chunk)
+			res.on('error', error => reject(error))
+			res.on('end', () => {
+				if (res.statusCode !== 200) {
+					try {
+						return reject(JSON.parse(token))
 					}
+					catch (ex) {
+						return reject(token)
+					}
+				}
+				const {email, role, given_name} = decodeToken(token)
+				return resolve({
+					email: email,
+					groups: role,
+					displayName: given_name,
+					uid: username.split('@').shift()
 				})
 			})
 		})
+
+		req.end(body)
 	} catch (err) {
 		reject(err)
 	}
@@ -70,10 +68,7 @@ const authenticate = (req, res, next) => {
 			req.user = user
 			next()
 		})
-		.catch(err => {
-			console.log('getActiveDirectoryUser', err)
-			res.status(401).json(err)
-		})
+		.catch(err => res.status(401).json(err))
 }
 
 module.exports = {
